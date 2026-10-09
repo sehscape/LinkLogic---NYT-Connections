@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#0b0d16"/>
+  <title>Link Logic &mdash; Connections + SQL Solver</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='26' height='26' rx='7' fill='%23ffd95e'/%3E%3Crect x='34' y='4' width='26' height='26' rx='7' fill='%239be15d'/%3E%3Crect x='4' y='34' width='26' height='26' rx='7' fill='%237fb3ff'/%3E%3Crect x='34' y='34' width='26' height='26' rx='7' fill='%23d29bff'/%3E%3C/svg%3E"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- animated aurora backdrop -->
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo-mark" aria-hidden="true">
+        <span class="sq d0"></span><span class="sq d1"></span>
+        <span class="sq d2"></span><span class="sq d3"></span>
+      </div>
+      <div class="brand-text">
+        <h1>Link<span class="grad">Logic</span></h1>
+        <p class="tagline">Connections &middot; powered by PostgreSQL</p>
+      </div>
+    </div>
+    <nav id="tabs" class="tabs hidden">
+      <button data-tab="game"   class="tab active">Game</button>
+      <button data-tab="solver" class="tab">Solver</button>
+      <button data-tab="stats"  class="tab">Stats</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ================= START ================= -->
+    <section id="screen-start">
+      <div class="hero">
+        <div class="hero-chips" aria-hidden="true">
+          <span class="chip d0" style="--i:0">GROUP</span>
+          <span class="chip d1" style="--i:1">FOUR</span>
+          <span class="chip d2" style="--i:2">WORDS</span>
+          <span class="chip d3" style="--i:3">DAILY</span>
+        </div>
+        <h2>Find the <em>hidden links.</em></h2>
+        <p class="hero-sub">1,100+ real puzzles &middot; a SQL-powered hint engine &middot; a live leaderboard.
+        Sixteen words, four secret groups, four mistakes &mdash; good luck.</p>
+      </div>
+
+      <div class="setup card">
+        <label for="username">Player name</label>
+        <input id="username" maxlength="40" placeholder="Who's playing?" autocomplete="off"/>
+        <div class="picker">
+          <button id="btn-random" class="btn btn-primary">&#9889; Random puzzle</button>
+          <button id="btn-latest" class="btn btn-ghost">&#128293; Latest</button>
+          <div class="date-wrap">
+            <input type="date" id="pick-date"/>
+            <button id="btn-bydate" class="btn btn-ghost">Play this date</button>
+          </div>
+        </div>
+        <p id="meta-line" class="muted small"></p>
+        <p id="start-error" class="error small"></p>
+      </div>
+
+      <div class="howto">
+        <div class="how d0"><b>Yellow</b><span>straightforward</span></div>
+        <div class="how d1"><b>Green</b><span>getting warmer</span></div>
+        <div class="how d2"><b>Blue</b><span>think harder</span></div>
+        <div class="how d3"><b>Purple</b><span>the twist</span></div>
+      </div>
+    </section>
+
+    <!-- ================= GAME ================= -->
+    <section id="screen-game" class="hidden">
+      <div id="puzzle-info" class="info-chips"></div>
+      <div id="solved-groups"></div>
+      <div id="grid" aria-label="word grid"></div>
+      <div id="mistakes">
+        <span class="muted">Mistakes remaining</span>
+        <span id="dots" aria-label="mistakes remaining"></span>
+      </div>
+      <div class="controls">
+        <button id="btn-shuffle"  class="btn btn-ghost">Shuffle</button>
+        <button id="btn-deselect" class="btn btn-ghost">Deselect</button>
+        <button id="btn-submit"   class="btn btn-primary" disabled>Submit</button>
+      </div>
+    </section>
+
+    <!-- ================= SOLVER ================= -->
+    <section id="screen-solver" class="hidden">
+      <h2 class="screen-title">Solver <span class="grad">Assistant</span></h2>
+      <p class="muted">Every hint is a live SQL query over the <em>other</em> puzzles in the
+      archive &mdash; the current puzzle's answers are never consulted.</p>
+
+      <div class="solver-tools">
+        <div class="tool card">
+          <div class="tool-head"><span class="tool-icon">&#128269;</span>
+            <div><h3>Word history</h3>
+            <p class="muted small">Every past appearance of a word &mdash; 3-table join.</p></div>
+          </div>
+          <div class="row">
+            <input id="solver-word" placeholder="e.g. HEAT" autocomplete="off"/>
+            <button id="btn-word-history" class="btn btn-primary">Look up</button>
+          </div>
+        </div>
+
+        <div class="tool card">
+          <div class="tool-head"><span class="tool-icon">&#127919;</span>
+            <div><h3>Grid signals</h3>
+            <p class="muted small">Mined from the 16 words you're playing right now.</p></div>
+          </div>
+          <div class="row wrap">
+            <button id="btn-candidates" class="btn btn-ghost">Candidate groups</button>
+            <button id="btn-pairs" class="btn btn-ghost">Pair signals</button>
+            <button id="btn-traps" class="btn btn-ghost">Trap words</button>
+          </div>
+        </div>
+
+        <div class="tool card">
+          <div class="tool-head"><span class="tool-icon">&#128161;</span>
+            <div><h3>Theme hypothesis</h3>
+            <p class="muted small">Fuzzy-match your theory against 4,400+ past categories (pg_trgm).</p></div>
+          </div>
+          <div class="row">
+            <input id="solver-theme" placeholder="e.g. basketball teams" autocomplete="off"/>
+            <button id="btn-theme" class="btn btn-primary">Check archive</button>
+          </div>
+        </div>
+      </div>
+      <div id="solver-results"></div>
+    </section>
+
+    <!-- ================= STATS ================= -->
+    <section id="screen-stats" class="hidden">
+      <h2 class="screen-title">Player <span class="grad">Stats</span></h2>
+      <div class="stats-grid">
+        <div class="card"><h3>&#127942; Leaderboard</h3><div id="stats-leaderboard"></div></div>
+        <div class="card"><h3>&#127912; Solve order by color</h3><div id="stats-colors"></div></div>
+        <div class="card"><h3>&#128293; Hardest puzzles</h3><div id="stats-hardest"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- end-of-game overlay -->
+  <div id="overlay" class="hidden">
+    <canvas id="confetti"></canvas>
+    <div id="overlay-card" class="overlay-card card"></div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+  <script src="game.js"></script>
+</body>
+</html>

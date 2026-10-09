@@ -1,0 +1,15 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Data cache (downloaded puzzle archive)
+data/*.json
+
+# OS
+Thumbs.db
+.DS_Store
