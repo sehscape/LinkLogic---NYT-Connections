@@ -1,0 +1,17 @@
+# Render Blueprint: deploys the FastAPI app (API + static frontend) as one
+# free web service. The database lives on Neon; its connection string is
+# entered in the Render dashboard as DATABASE_URL (never committed).
+services:
+  - type: web
+    name: linklogic
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    # "/" serves the static frontend, so health checks never wake the database.
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    envVars:
+      - key: DATABASE_URL
+        sync: false

@@ -69,6 +69,26 @@ uvicorn backend.main:app --reload
 Open http://127.0.0.1:8000 — pick a name, play a random puzzle or any date,
 and open the **Solver** tab for SQL-powered hints.
 
+## Deploying (Render + Neon, free tier)
+
+The app is one FastAPI service (API + static frontend), so it deploys as a
+single Render web service backed by a Neon PostgreSQL database.
+
+1. **Neon** — create a project (region: Singapore) and copy the *direct*
+   (non-pooled) connection string.
+2. **Load the database** from your machine, with that string in `.env`:
+
+   ```bash
+   psql "<neon-url>" -f db/01_schema.sql -f db/02_indexes.sql -f db/03_views.sql
+   python etl/load_data.py
+   ```
+
+3. **Render** — New → Blueprint, pick this repo. `render.yaml` sets the build
+   and start commands; paste the Neon string when asked for `DATABASE_URL`.
+
+Every push to `main` redeploys. The free web service sleeps after ~15 minutes
+idle, so the first visit after that takes up to a minute to wake.
+
 ## Running the solver from psql
 
 ```bash
